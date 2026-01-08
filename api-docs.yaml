@@ -1,0 +1,231 @@
+openapi: 3.0.0
+info:
+  title: Evently API - Event Monolith
+  description: >
+    API for managing tech events.
+    Includes JWT authentication, URL shortener, asynchronous ticket processing via SQS,
+    and real-time metrics.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local Development Server
+
+paths:
+  # --------------------
+  # AUTH
+  # --------------------
+  /auth/register:
+    post:
+      summary: Create a new user account (Organizer)
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        "201":
+          description: User successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        "400":
+          description: Email already exists or invalid data.
+
+  /auth/login:
+    post:
+      summary: Authenticate user and return JWT token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: Authentication successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        "401":
+          description: Invalid credentials.
+
+  # --------------------
+  # EVENTS
+  # --------------------
+  /events:
+    post:
+      summary: Create an event, upload banner to S3 and generate short URL
+      tags: [Events]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        "201":
+          description: Event successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        "401":
+          description: Unauthorized (missing or invalid token).
+  /events/{shortCode}:
+    get:
+      summary: Redirect to original URL and compute metrics
+      tags: [Events]
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "tech26"
+      responses:
+        "302":
+          description: Redirect to original URL.
+        "404":
+          description: Short code not found.
+
+  # --------------------
+  # TICKETS (ASYNC)
+  # --------------------
+  /tickets/buy:
+    post:
+      summary: Request ticket purchase (SQS asynchronous processing)
+      tags: [Tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketPurchaseRequest'
+      responses:
+        "202":
+          description: Request accepted and queued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncAcceptedResponse'
+
+  # --------------------
+  # SCHEMAS
+  # --------------------
+components:
+  schemas:
+    BaseEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    UserRegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 6
+
+    UserResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    EventRequest:
+      type: object
+      required: [name, date, destinationUrl]
+      properties:
+        name:
+          type: string
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+        destinationUrl:
+          type: string
+          format: uri
+
+    EventResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            name:
+              type: string
+            date:
+              type: string
+              format: date-time
+            description:
+              type: string
+            shortCode:
+              type: string
+            shortUrl:
+              type: string
+
+    TicketPurchaseRequest:
+      type: object
+      required: [eventId, participantEmail]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        participantEmail:
+          type: string
+          format: email
+
+    AsyncAcceptedResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        requestedAt:
+          type: string
+          format: date-time
