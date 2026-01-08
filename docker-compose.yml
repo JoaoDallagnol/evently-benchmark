@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db-java:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: evently_java
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5431:5432"
+
+  db-bun:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: evently_bun
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+
+  db-go:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: evently_go
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5433:5432"
+
+  db-elixir:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: evently_elixir
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5434:5432"
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      - DEFAULT_REGION=us-east-1
