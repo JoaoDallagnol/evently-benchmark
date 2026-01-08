@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_DB: evently_java
       POSTGRES_PASSWORD: root
+    restart: no
     ports:
       - "5431:5432"
 
@@ -14,6 +15,7 @@ services:
     environment:
       POSTGRES_DB: evently_bun
       POSTGRES_PASSWORD: root
+    restart: no
     ports:
       - "5432:5432"
 
@@ -22,6 +24,7 @@ services:
     environment:
       POSTGRES_DB: evently_go
       POSTGRES_PASSWORD: root
+    restart: no
     ports:
       - "5433:5432"
 
@@ -30,6 +33,7 @@ services:
     environment:
       POSTGRES_DB: evently_elixir
       POSTGRES_PASSWORD: root
+    restart: no
     ports:
       - "5434:5432"
 
@@ -37,6 +41,9 @@ services:
     image: localstack/localstack
     ports:
       - "4566:4566"
+    restart: no
     environment:
       - SERVICES=sqs
       - DEFAULT_REGION=us-east-1
+    volumes:
+      - "./infra/setup-sqs:/etc/localstack/init/ready.d"
