@@ -47,3 +47,5 @@ services:
       - DEFAULT_REGION=us-east-1
     volumes:
       - "./infra/setup-sqs:/etc/localstack/init/ready.d"
+    entrypoint: >
+      sh -c "chmod +x /etc/localstack/init/ready.d/init.sh && /usr/local/bin/docker-entrypoint.sh"
