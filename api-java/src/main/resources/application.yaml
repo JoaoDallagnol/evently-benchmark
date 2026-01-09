@@ -1,3 +1,7 @@
 spring:
   application:
     name: evently-java
+  datasource:
+    url: jdbc:postgresql://localhost:5431/evently_java
+    username: postgres
+    password: root
